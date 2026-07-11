@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --background: #040714;
+  --foreground: #edf4ff;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; background: var(--background); }
+body { color: var(--foreground); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+.game-shell { min-height: 100svh; display: grid; grid-template-rows: auto 1fr auto; gap: 15px; overflow: hidden; padding: 16px; position: relative; background: radial-gradient(circle at 50% 36%, #112650, #050713 63%); }
+.ambient { position: absolute; border-radius: 50%; filter: blur(75px); opacity: .25; pointer-events: none; }
+.ambient-one { width: 42vw; height: 28vw; left: -18vw; bottom: -16vw; background: #285cff; }
+.ambient-two { width: 34vw; height: 28vw; right: -13vw; top: -17vw; background: #36d9ff; }
+.site-header, .site-footer, .game-frame { width: min(1440px, 100%); margin: 0 auto; position: relative; z-index: 1; }
+.site-header { display: flex; align-items: center; justify-content: space-between; padding: 0 5px; }
+.brand { color: #eaf2ff; text-decoration: none; display: flex; gap: 9px; align-items: center; letter-spacing: .13em; font: 800 18px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; }
+.brand b { color: #66dcff; }
+.pac-dot { width: 15px; height: 15px; border-radius: 50%; display: block; position: relative; background: #ffe034; box-shadow: 0 0 16px #ffe034; }
+.pac-dot::after { content: ""; position: absolute; top: 4px; right: -1px; border-left: 7px solid #060b1b; border-block: 4px solid transparent; }
+.open-button { color: #06121f; background: #ffe035; padding: 10px 12px 10px 16px; border-radius: 7px; text-decoration: none; font: 800 10px/1 Inter, sans-serif; letter-spacing: .13em; transition: transform .2s, filter .2s; }
+.open-button span { padding-left: 6px; font-size: 15px; vertical-align: -1px; }
+.open-button:hover { transform: translateY(-2px); filter: brightness(1.08); }
+.game-frame { min-height: 0; border: 1px solid #2b4f86; background: #050713; border-radius: 14px; padding: 1px; overflow: hidden; box-shadow: 0 18px 70px #0008, 0 0 0 1px #101d3b inset; }
+.game-frame iframe { display: block; width: 100%; height: 100%; min-height: calc(100svh - 142px); border: 0; background: #050713; }
+.site-footer { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 9px; min-height: 16px; color: #7890b0; font: 700 9px/1 Inter, sans-serif; letter-spacing: .12em; text-align: center; }
+.site-footer i { width: 3px; height: 3px; border-radius: 50%; background: #45618b; }
+@media (max-width: 650px) { .game-shell { padding: 10px; gap: 10px; } .brand { font-size: 15px; } .open-button { font-size: 8px; padding: 9px 10px; } .game-frame { border-radius: 10px; } .game-frame iframe { min-height: calc(100svh - 130px); } .site-footer { font-size: 7px; letter-spacing: .07em; } .site-footer i { display: none; } }
