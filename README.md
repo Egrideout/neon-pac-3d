@@ -2,6 +2,10 @@
 
 A smooth, keyboard-controlled 3D maze game built with Three.js.
 
+## Play online
+
+**[Launch Neon Pac 3D](https://neon-pac-3d.vercel.app)**
+
 ## Play on your Mac
 
 The easiest option is to double-click **Neon Pac 3D.app**. It opens the game in your default browser and keeps a small Terminal window open while you play. Close that Terminal window to stop the game server.
