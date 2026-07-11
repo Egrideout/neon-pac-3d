@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.DS_Store
+.vercel/
+Neon Pac 3D.app/
+scripts/
