@@ -2,25 +2,72 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import './style.css';
 
-const MAP = [
-  '#################',
-  '#o.....#.#.....o#',
-  '#.###.#...#.###.#',
-  '#.....#...#.....#',
-  '###.#.###.###.#.#',
-  '#...#.........#.#',
-  '#.###.##.##.###.#',
-  '#......#.#......#',
-  '#.###.#...#.###.#',
-  '#.....#.G.#.....#',
-  '###.#.#####.#.###',
-  '#...#...P...#...#',
-  '#.###.#####.###.#',
-  '#o..#...#...#..o#',
-  '###.###.#.###.###',
-  '#...............#',
-  '#################',
+const MAZES = [
+  [
+    '#################',
+    '#o.....#.#.....o#',
+    '#.###.#...#.###.#',
+    '#.....#...#.....#',
+    '###.#.###.###.#.#',
+    '#...#.........#.#',
+    '#.###.##.##.###.#',
+    '#......#.#......#',
+    '#.###.#...#.###.#',
+    '#.....#.G.#.....#',
+    '###.#.#####.#.###',
+    '#...#...P...#...#',
+    '#.###.#####.###.#',
+    '#o..#...#...#..o#',
+    '###.###.#.###.###',
+    '#...............#',
+    '#################',
+  ],
+  [
+    '#################',
+    '#o...#.....#...o#',
+    '#.##.#.###.#.##.#',
+    '#....#...#...#..#',
+    '###.###.#.###.###',
+    '#.....#.#.#.....#',
+    '#.###.#.#.#.###.#',
+    '#...#.....#...#.#',
+    '###.#.##.##.#.###',
+    '#.....#.G.#.....#',
+    '#.###.#####.###.#',
+    '#...#...P...#...#',
+    '###.#.#####.#.###',
+    '#o..#...#...#..o#',
+    '#.###.#.#.#.###.#',
+    '#...............#',
+    '#################',
+  ],
+  [
+    '#################',
+    '#o...#.....#...o#',
+    '#.##.#.###.#.##.#',
+    '#....#...#...#..#',
+    '#.####.#.#.####.#',
+    '#......#.#......#',
+    '#.####.#.#.####.#',
+    '#...#.......#...#',
+    '###.#.##.##.#.###',
+    '#.....#.G.#.....#',
+    '#.###.#####.###.#',
+    '#...#...P...#...#',
+    '###.#.#####.#.###',
+    '#o..#...#...#..o#',
+    '#.###.#.#.#.###.#',
+    '#...............#',
+    '#################',
+  ],
 ];
+const MAZE_THEMES = [
+  { wall: 0x142b5a, glow: 0x071c5a, edge: 0x2d73ff, rim: 0x315bff },
+  { wall: 0x18334d, glow: 0x06323d, edge: 0x28d9ce, rim: 0x24d8c9 },
+  { wall: 0x30205b, glow: 0x2b0b57, edge: 0xb35eff, rim: 0x9a50ff },
+];
+let mazeIndex = 0;
+let MAP = MAZES[mazeIndex];
 
 const rows = MAP.length;
 const cols = MAP[0].length;
@@ -62,6 +109,8 @@ scene.add(rimLight);
 
 const maze = new THREE.Group();
 scene.add(maze);
+const mazeObjects = new THREE.Group();
+maze.add(mazeObjects);
 const floor = new THREE.Mesh(
   new RoundedBoxGeometry(cols + 1.2, 0.34, rows + 1.2, 4, 0.32),
   new THREE.MeshStandardMaterial({ color: 0x08101d, roughness: 0.55, metalness: 0.4 })
@@ -77,6 +126,7 @@ grid.material.transparent = true;
 maze.add(grid);
 
 const wallGeo = new RoundedBoxGeometry(0.92, 0.72, 0.92, 5, 0.15);
+const wallEdgesGeo = new THREE.EdgesGeometry(wallGeo, 35);
 const wallMat = new THREE.MeshPhysicalMaterial({ color: 0x142b5a, roughness: 0.18, metalness: 0.25, clearcoat: 0.7, emissive: 0x071c5a, emissiveIntensity: 1.15 });
 const wallEdgeMat = new THREE.MeshBasicMaterial({ color: 0x2d73ff, transparent: true, opacity: 0.52 });
 const pelletGeo = new THREE.SphereGeometry(0.075, 16, 12);
@@ -93,15 +143,19 @@ const keyOf = (r, c) => `${r},${c}`;
 const isWall = (r, c) => !MAP[Math.round(r)] || MAP[Math.round(r)][Math.round(c)] === '#';
 
 function buildMaze() {
+  mazeObjects.clear();
+  pellets.clear();
+  playerStart = { r: 11, c: 8 };
+  ghostStart = { r: 9, c: 8 };
   MAP.forEach((line, r) => [...line].forEach((cell, c) => {
     if (cell === '#') {
       const wall = new THREE.Mesh(wallGeo, wallMat);
       wall.position.set(worldX(c), 0.26, worldZ(r));
       wall.castShadow = wall.receiveShadow = true;
-      maze.add(wall);
-      const edge = new THREE.LineSegments(new THREE.EdgesGeometry(wallGeo, 35), wallEdgeMat);
+      mazeObjects.add(wall);
+      const edge = new THREE.LineSegments(wallEdgesGeo, wallEdgeMat);
       edge.position.copy(wall.position);
-      maze.add(edge);
+      mazeObjects.add(edge);
     } else {
       if (cell === 'P') playerStart = { r, c };
       if (cell === 'G') ghostStart = { r, c };
@@ -114,7 +168,7 @@ function addPellet(r, c, power) {
   const mesh = new THREE.Mesh(power ? powerGeo : pelletGeo, power ? powerMat : pelletMat);
   mesh.position.set(worldX(c), power ? 0.29 : 0.17, worldZ(r));
   mesh.userData = { power, baseY: mesh.position.y, phase: Math.random() * 6.28 };
-  maze.add(mesh);
+  mazeObjects.add(mesh);
   pellets.set(keyOf(r, c), mesh);
   if (power) {
     const glow = new THREE.PointLight(0x3cdfff, 2.6, 2.2, 2);
@@ -122,7 +176,17 @@ function addPellet(r, c, power) {
     mesh.add(glow);
   }
 }
-buildMaze();
+function loadMaze(index) {
+  mazeIndex = index % MAZES.length;
+  MAP = MAZES[mazeIndex];
+  const theme = MAZE_THEMES[mazeIndex];
+  wallMat.color.setHex(theme.wall);
+  wallMat.emissive.setHex(theme.glow);
+  wallEdgeMat.color.setHex(theme.edge);
+  rimLight.color.setHex(theme.rim);
+  buildMaze();
+}
+loadMaze(mazeIndex);
 
 function createPac() {
   const group = new THREE.Group();
@@ -185,11 +249,18 @@ ghosts[3].spawnR -= 2; ghosts[3].r -= 2;
 ghosts.forEach(g => scene.add(g.mesh));
 
 const frightenedMat = new THREE.MeshPhysicalMaterial({ color: 0x275cff, emissive: 0x244cff, emissiveIntensity: 1.2, roughness: 0.25, clearcoat: 0.7 });
-let score = 0, lives = 3, high = Number(localStorage.getItem('neonPacHigh') || 0);
+let score = 0, lives = 3, level = 1, high = Number(localStorage.getItem('neonPacHigh') || 0);
 let powered = 0, shootCooldown = 0, started = false, paused = false, over = false, won = false;
 let soundOn = true, lastTime = performance.now(), elapsed = 0;
 const shots = [], particles = [];
-window.__gameDebug = () => ({ player: { r: player.r, c: player.c, dir: player.dir, next: player.next }, ghosts: ghosts.map(g => ({ r:g.r, c:g.c, active:g.active })), score, lives, powered, started, paused, over });
+window.__gameDebug = () => ({ player: { r: player.r, c: player.c, dir: player.dir, next: player.next }, ghosts: ghosts.map(g => ({ r:g.r, c:g.c, active:g.active })), score, lives, level, mazeIndex, powered, started, paused, over, advanceLevel });
+
+function setGhostSpawns() {
+  ghosts.forEach((g, index) => {
+    g.spawnR = ghostStart.r + (index === 3 ? -2 : 0);
+    g.spawnC = ghostStart.c + (index === 0 ? -1 : index === 2 ? 1 : 0);
+  });
+}
 
 function resetPositions() {
   Object.assign(player, { ...playerStart, dir: { r: 0, c: 0, angle: 0 }, next: { r: 0, c: 0, angle: 0 }, decisionKey: null });
@@ -236,8 +307,10 @@ function chooseGhostDir(g) {
   const targetR = powered > 0 ? rows - player.r : player.r;
   const targetC = powered > 0 ? cols - player.c : player.c;
   pool.sort((a, b) => {
-    const da = Math.abs(g.r + a.r - targetR) + Math.abs(g.c + a.c - targetC) + Math.random() * (powered ? 6 : 1.8);
-    const db = Math.abs(g.r + b.r - targetR) + Math.abs(g.c + b.c - targetC) + Math.random() * (powered ? 6 : 1.8);
+    const huntVariance = Math.max(0.18, 1.8 - (level - 1) * 0.24);
+    const fleeVariance = Math.max(2.2, 6 - (level - 1) * 0.25);
+    const da = Math.abs(g.r + a.r - targetR) + Math.abs(g.c + a.c - targetC) + Math.random() * (powered ? fleeVariance : huntVariance);
+    const db = Math.abs(g.r + b.r - targetR) + Math.abs(g.c + b.c - targetC) + Math.random() * (powered ? fleeVariance : huntVariance);
     return da - db;
   });
   return pool[0];
@@ -250,7 +323,7 @@ function moveGhosts(dt) {
       if (g.respawn <= 0) { g.active = true; g.mesh.visible = true; g.r = g.spawnR; g.c = g.spawnC; g.decisionKey = null; burst(g.r, g.c, g.color, 12); }
       return;
     }
-    const speed = powered > 0 ? 2.5 : 2.85 + index * 0.08;
+    const speed = powered > 0 ? 2.45 + (level - 1) * 0.1 : 2.85 + (level - 1) * 0.16 + index * 0.08;
     const step = speed * dt;
     const centerKey = keyOf(Math.round(g.r), Math.round(g.c));
     if (centerKey !== g.decisionKey && nearCenter(g.r, step) && nearCenter(g.c, step)) {
@@ -274,7 +347,7 @@ function eatPellet(key, mesh) {
     burst(player.r, player.c, 0x43e8ff, 30);
   }
   updateHud();
-  if (!pellets.size) finish(true);
+  if (!pellets.size) advanceLevel();
 }
 
 function setGhostFrightened(g, afraid) {
@@ -308,7 +381,7 @@ function moveShots(dt) {
 
 function defeatGhost(g) {
   if (!g.active) return;
-  g.active = false; g.mesh.visible = false; g.respawn = 4.2; score += 300;
+  g.active = false; g.mesh.visible = false; g.respawn = Math.max(1.8, 4.2 - (level - 1) * 0.26); score += 300;
   burst(g.r, g.c, g.color, 26); tone(430, .22, 'sawtooth', .07); updateHud();
 }
 
@@ -325,6 +398,22 @@ function finish(success) {
   high = Math.max(high, score); localStorage.setItem('neonPacHigh', high); updateHud();
   showMessage(success ? 'MAZE CLEAR' : 'GAME OVER', 'PRESS ENTER TO PLAY AGAIN');
   tone(success ? 740 : 120, .55, success ? 'triangle' : 'sawtooth', .08);
+}
+
+function advanceLevel() {
+  paused = true;
+  powered = 0;
+  shots.splice(0).forEach(s => scene.remove(s.mesh));
+  level++;
+  score += 500;
+  loadMaze(mazeIndex + 1);
+  setGhostSpawns();
+  resetPositions();
+  updateHud();
+  showMessage(`SECTOR ${String(level).padStart(2, '0')}`, `MAZE ${mazeIndex + 1} · GHOSTS MOVE FASTER`);
+  tone(740, .18, 'triangle', .08);
+  setTimeout(() => tone(980, .18, 'triangle', .06), 160);
+  setTimeout(() => { if (!over) { paused = false; hideMessage(); } }, 1450);
 }
 
 function burst(r, c, color, count) {
@@ -361,6 +450,7 @@ function hideMessage() { document.querySelector('#message').classList.remove('sh
 function updateHud() {
   document.querySelector('#score').textContent = String(score).padStart(6,'0');
   document.querySelector('#high-score').textContent = String(Math.max(score,high)).padStart(6,'0');
+  document.querySelector('#level').textContent = String(level).padStart(2,'0');
   document.querySelector('#lives').textContent = Array(Math.max(0,lives)).fill('●').join(' ');
 }
 updateHud();

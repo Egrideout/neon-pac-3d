@@ -14,6 +14,7 @@ body { background: radial-gradient(circle at 50% 42%, #101a37, #050713 70%); }
 .stats span, .power-label span { color:#7990ad; font:600 10px/1 Inter,sans-serif; letter-spacing:.2em; }
 .stats strong { color:#f4f8ff; font:700 21px/1 'Barlow Condensed',sans-serif; letter-spacing:.1em; }
 #lives { color:#ffe23f; font-size:14px; letter-spacing:.25em; }
+#level { color:#65ddff; }
 .controls { position:absolute; left:50%; bottom:20px; transform:translateX(-50%); display:flex; gap:22px; color:#7587a3; font-size:10px; letter-spacing:.05em; white-space:nowrap; pointer-events:none; }
 kbd { color:#ccd9ed; border:1px solid #3b506d; border-bottom-width:2px; border-radius:5px; padding:3px 6px; background:#101a2b; font:600 9px Inter; }
 .sound { position:absolute; right:30px; bottom:20px; width:36px; height:36px; border:1px solid #263954; color:#8ba1bf; background:#0b1220aa; border-radius:50%; cursor:pointer; font-size:16px; }
